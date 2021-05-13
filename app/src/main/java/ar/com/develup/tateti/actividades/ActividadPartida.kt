@@ -20,7 +20,7 @@ import java.util.*
 
 class ActividadPartida : AppCompatActivity() {
 
-    private lateinit var partida: Partida
+    private var partida: Partida? = null
 
     private val partidaCambio: ValueEventListener = object : ValueEventListener {
         override fun onDataChange(dataSnapshot: DataSnapshot) {
@@ -40,7 +40,7 @@ class ActividadPartida : AppCompatActivity() {
         setContentView(R.layout.actividad_partida)
         if (intent.hasExtra(Constantes.EXTRA_PARTIDA)) {
             partida = intent.getSerializableExtra(Constantes.EXTRA_PARTIDA) as Partida
-            if (partida.oponente == null) {
+            if (partida?.oponente == null) {
                 sumarmeComoOponente()
             }
             configurarListeners()
@@ -72,9 +72,9 @@ class ActividadPartida : AppCompatActivity() {
     }
 
     private fun cargarVistasPartidaIniciada() {
-        for ((posicion, jugador) in partida.movimientos) {
+        for ((posicion, jugador) in partida?.movimientos!!) {
             val boton = tablero!!.findViewWithTag<View>(posicion.toString()) as Button
-            if (jugador == partida.retador) {
+            if (jugador == partida?.retador) {
                 boton.text = "X"
             } else {
                 boton.text = "O"
@@ -89,7 +89,7 @@ class ActividadPartida : AppCompatActivity() {
             val jugador = FirebaseAuth.getInstance().currentUser.uid
             val builder = AlertDialog.Builder(this)
             builder.setTitle("Partida finalizada")
-            builder.setMessage(if (partida.ganador == jugador) "GANASTE!" else "PERDISTE :(")
+            builder.setMessage(if (partida?.ganador == jugador) "GANASTE!" else "PERDISTE :(")
             try {
                 builder.show()
             } catch (ignored: Exception) {
@@ -106,7 +106,7 @@ class ActividadPartida : AppCompatActivity() {
     }
 
     private fun finalizo(): Boolean {
-        return partida.movimientos.size == 9
+        return partida?.movimientos?.size == 9
     }
 
     private fun hayTaTeTi(): Boolean {
@@ -135,19 +135,19 @@ class ActividadPartida : AppCompatActivity() {
                 boton.setTextColor(resources.getColor(android.R.color.holo_green_dark))
             }
             if ("X".equals(valor, ignoreCase = true)) {
-                establecerGanador(partida.retador)
+                establecerGanador(partida?.retador)
             } else if ("O".equals(valor, ignoreCase = true)) {
-                establecerGanador(partida.oponente)
+                establecerGanador(partida?.oponente)
             }
         }
         return sonIguales
     }
 
     private fun establecerGanador(ganador: String?) {
-        partida.ganador = ganador
+        partida?.ganador = ganador
         val database = FirebaseDatabase.getInstance().reference
         val referenciaPartidas = database.child(Constantes.TABLA_PARTIDAS)
-        val referenciaPartida = referenciaPartidas.child(partida.id!!)
+        val referenciaPartida = referenciaPartidas.child(partida?.id!!)
         referenciaPartida.child("ganador").setValue(ganador)
     }
 
@@ -159,15 +159,15 @@ class ActividadPartida : AppCompatActivity() {
             if (partida == null) {
                 button.text = "X"
                 crearPartida(numeroPosicion)
-            } else if (partida.ganador == null) {
-                if (partida.retador == jugador) {
+            } else if (partida?.ganador == null) {
+                if (partida?.retador == jugador) {
                     button.text = "X"
-                } else if (partida.oponente == jugador) {
+                } else if (partida?.oponente == jugador) {
                     button.text = "O"
                 }
                 actualizarPartida(numeroPosicion)
             }
-        } else if (partida.ganador == null) {
+        } else if (partida?.ganador == null) {
             Snackbar.make(rootView, "Es el turno de tu oponente", Snackbar.LENGTH_SHORT).show()
         }
     }
@@ -176,37 +176,37 @@ class ActividadPartida : AppCompatActivity() {
         val jugador = FirebaseAuth.getInstance().currentUser.uid
         return (partida == null
                 ||
-                partida.movimientos[partida.movimientos.size - 1].jugador != jugador)
+                partida!!.movimientos[partida!!.movimientos.size - 1].jugador != jugador)
     }
 
     private fun actualizarPartida(posicion: Int) {
         val jugador = FirebaseAuth.getInstance().currentUser.uid
-        partida.movimientos.add(Movimiento(posicion, jugador))
+        partida?.movimientos?.add(Movimiento(posicion, jugador))
         val database = FirebaseDatabase.getInstance().reference
         val referenciaPartidas = database.child(Constantes.TABLA_PARTIDAS)
-        val referenciaPartida = referenciaPartidas.child(partida.id!!)
-        referenciaPartida.child("movimientos").setValue(partida.movimientos)
+        val referenciaPartida = referenciaPartidas.child(partida?.id!!)
+        referenciaPartida.child("movimientos").setValue(partida?.movimientos)
     }
 
     private fun crearPartida(posicion: Int) {
         val jugador = FirebaseAuth.getInstance().currentUser.uid
         partida = Partida()
-        partida.retador = jugador
-        partida.movimientos.add(Movimiento(posicion, jugador))
+        partida?.retador = jugador
+        partida?.movimientos?.add(Movimiento(posicion, jugador))
         val database = FirebaseDatabase.getInstance().reference
         val referenciaPartidas = database.child(Constantes.TABLA_PARTIDAS)
         val referenciaPartida = referenciaPartidas.push()
         referenciaPartida.setValue(partida)
-        partida.id = referenciaPartida.key
+        partida?.id = referenciaPartida.key
         configurarListeners()
     }
 
     private fun sumarmeComoOponente() {
         val jugador = FirebaseAuth.getInstance().currentUser.uid
-        partida.oponente = jugador
+        partida?.oponente = jugador
         val database = FirebaseDatabase.getInstance().reference
         val referenciaPartidas = database.child(Constantes.TABLA_PARTIDAS)
-        val referenciaPartida = referenciaPartidas.child(partida.id!!)
+        val referenciaPartida = referenciaPartidas.child(partida?.id!!)
         referenciaPartida.child("oponente").setValue(jugador)
     }
 }
