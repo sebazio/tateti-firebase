@@ -93,6 +93,13 @@ class ActividadInicial : AppCompatActivity() {
     private fun iniciarSesion() {
         val email = email.text.toString()
         val password = password.text.toString()
+
+
+        // TODO-05-AUTHENTICATION
+        // IMPORTANTE: Eliminar  la siguiente linea cuando se implemente authentication
+        verPartidas()
+
+
         // TODO-05-AUTHENTICATION
         // hacer signInWithEmailAndPassword con los valores ingresados de email y password
         // Agregar en addOnCompleteListener el campo authenticationListener definido mas abajo
