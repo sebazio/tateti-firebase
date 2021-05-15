@@ -10,11 +10,6 @@ import ar.com.develup.tateti.modelo.Constantes
 import ar.com.develup.tateti.modelo.Movimiento
 import ar.com.develup.tateti.modelo.Partida
 import com.google.android.material.snackbar.Snackbar
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
 import kotlinx.android.synthetic.main.actividad_partida.*
 import java.util.*
 
@@ -22,28 +17,17 @@ class ActividadPartida : AppCompatActivity() {
 
     private var partida: Partida? = null
 
-    private val partidaCambio: ValueEventListener = object : ValueEventListener {
-        override fun onDataChange(dataSnapshot: DataSnapshot) {
-            val partida = dataSnapshot.getValue(Partida::class.java)
-            if (partida != null) {
-                partida.id = dataSnapshot.key
-                this@ActividadPartida.partida = partida
-                cargarVistasPartidaIniciada()
-            }
-        }
-
-        override fun onCancelled(databaseError: DatabaseError) {}
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.actividad_partida)
         if (intent.hasExtra(Constantes.EXTRA_PARTIDA)) {
             partida = intent.getSerializableExtra(Constantes.EXTRA_PARTIDA) as Partida
+
+            // Si esta partida creada no tiene oponente, entonces me sumo yo como oponente
             if (partida?.oponente == null) {
                 sumarmeComoOponente()
             }
-            configurarListeners()
+            suscribirseACambiosEnLaPartida()
         }
         val botones: MutableList<Button> = LinkedList()
         botones.add(posicion1)
@@ -60,16 +44,37 @@ class ActividadPartida : AppCompatActivity() {
         }
     }
 
-    private fun configurarListeners() {
-        FirebaseDatabase.getInstance().getReference(Constantes.TABLA_PARTIDAS).child(partida!!.id!!)
-                .addValueEventListener(partidaCambio)
+    private fun suscribirseACambiosEnLaPartida() {
+        // TODO-06-DATABASE
+        // 1 - Obtener una referencia a Constantes.TABLA_PARTIDAS
+        // 2 - Obtener el child de la partida, a partir de partida.id
+        // 3 - Agregar como valueEventListener el listener partidaCambio definido mas abajo
     }
 
     override fun onPause() {
         super.onPause()
-        FirebaseDatabase.getInstance().getReference(Constantes.TABLA_PARTIDAS).child(partida!!.id!!)
-                .removeEventListener(partidaCambio)
+        // TODO-06-DATABASE
+        // Ahora nos tenemos que desuscribir a los cambios en la base de datos.
+        // 1 - Obtener una referencia a Constantes.TABLA_PARTIDAS
+        // 2 - Obtener el child de la partida, a partir de partida.id
+        // 3 - REMOVER el valueEventListener el listener partidaCambio
     }
+
+    /*
+    private val partidaCambio: ValueEventListener = object : ValueEventListener {
+        override fun onDataChange(dataSnapshot: DataSnapshot) {
+            val partida = ??? // Obtener la partida a partir del dataSnapshot
+            if (partida != null) {
+                partida.id = ??? // Asignar el valor del campo "key" del dataSnapshot
+                this@ActividadPartida.partida = partida
+                cargarVistasPartidaIniciada()
+            }
+        }
+
+        override fun onCancelled(databaseError: DatabaseError) {
+        }
+    }
+     */
 
     private fun cargarVistasPartidaIniciada() {
         for ((posicion, jugador) in partida?.movimientos!!) {
@@ -86,7 +91,7 @@ class ActividadPartida : AppCompatActivity() {
 
     private fun comprobarGanador() {
         if (hayTaTeTi()) {
-            val jugador = FirebaseAuth.getInstance().currentUser.uid
+            val jugador = obtenerIdDeUsuario()
             val builder = AlertDialog.Builder(this)
             builder.setTitle("Partida finalizada")
             builder.setMessage(if (partida?.ganador == jugador) "GANASTE!" else "PERDISTE :(")
@@ -145,15 +150,16 @@ class ActividadPartida : AppCompatActivity() {
 
     private fun establecerGanador(ganador: String?) {
         partida?.ganador = ganador
-        val database = FirebaseDatabase.getInstance().reference
-        val referenciaPartidas = database.child(Constantes.TABLA_PARTIDAS)
-        val referenciaPartida = referenciaPartidas.child(partida?.id!!)
-        referenciaPartida.child("ganador").setValue(ganador)
+        val database = obtenerReferenciaALaBaseDeDatos()
+        val referenciaPartidas = null // TODO-06-DATABASE cambiar el valor null por el child de la database llamado "Constantes.TABLA_PARTIDAS"
+        val referenciaPartida = null // TODO-06-DATABASE cambiar el valor null por el child de referenciaPartidas con el id de la partida como parametro
+        // TODO-06-DATABASE Descomentar la siguiente linea una vez obtenidos los dos datos anteriores
+//        referenciaPartida.child("ganador").setValue(ganador)
     }
 
     fun jugar(button: Button) {
         if (esMiTurno()) {
-            val jugador = FirebaseAuth.getInstance().currentUser.uid
+            val jugador = obtenerIdDeUsuario()
             val posicion = button.tag as String
             val numeroPosicion = Integer.valueOf(posicion)
             if (partida == null) {
@@ -173,40 +179,54 @@ class ActividadPartida : AppCompatActivity() {
     }
 
     private fun esMiTurno(): Boolean {
-        val jugador = FirebaseAuth.getInstance().currentUser.uid
+        val jugador = obtenerIdDeUsuario()
         return (partida == null
                 ||
                 partida!!.movimientos[partida!!.movimientos.size - 1].jugador != jugador)
     }
 
     private fun actualizarPartida(posicion: Int) {
-        val jugador = FirebaseAuth.getInstance().currentUser.uid
+        val jugador = obtenerIdDeUsuario()
         partida?.movimientos?.add(Movimiento(posicion, jugador))
-        val database = FirebaseDatabase.getInstance().reference
-        val referenciaPartidas = database.child(Constantes.TABLA_PARTIDAS)
-        val referenciaPartida = referenciaPartidas.child(partida?.id!!)
-        referenciaPartida.child("movimientos").setValue(partida?.movimientos)
+        val database = obtenerReferenciaALaBaseDeDatos()
+        val referenciaPartidas = null // TODO-06-DATABASE cambiar el valor null por el child de la database llamado "Constantes.TABLA_PARTIDAS"
+        val referenciaPartida = null // TODO-06-DATABASE cambiar el valor null por el child de referenciaPartidas con el id de la partida como parametro
+        // TODO-06-DATABASE Descomentar la siguiente linea una vez obtenidos los dos datos anteriores
+//        referenciaPartida.child("movimientos").setValue(partida?.movimientos)
     }
 
     private fun crearPartida(posicion: Int) {
-        val jugador = FirebaseAuth.getInstance().currentUser.uid
+        val jugador = obtenerIdDeUsuario()
         partida = Partida()
         partida?.retador = jugador
         partida?.movimientos?.add(Movimiento(posicion, jugador))
-        val database = FirebaseDatabase.getInstance().reference
-        val referenciaPartidas = database.child(Constantes.TABLA_PARTIDAS)
-        val referenciaPartida = referenciaPartidas.push()
-        referenciaPartida.setValue(partida)
-        partida?.id = referenciaPartida.key
-        configurarListeners()
+        val database = obtenerReferenciaALaBaseDeDatos()
+        val referenciaPartidas = null // TODO-06-DATABASE cambiar el valor null por el child de la database llamado "Constantes.TABLA_PARTIDAS"
+        val referenciaPartida = null // TODO-06-DATABASE hacer un push() de referenciaPartidas para guardar el valor
+        // TODO-06-DATABASE Descomentar las dos siguientes linea una vez obtenidos los dos datos anteriores
+//        referenciaPartida.setValue(partida)
+//        partida?.id = referenciaPartida.key
+        suscribirseACambiosEnLaPartida()
     }
 
     private fun sumarmeComoOponente() {
-        val jugador = FirebaseAuth.getInstance().currentUser.uid
+        val jugador = obtenerIdDeUsuario()
         partida?.oponente = jugador
-        val database = FirebaseDatabase.getInstance().reference
-        val referenciaPartidas = database.child(Constantes.TABLA_PARTIDAS)
-        val referenciaPartida = referenciaPartidas.child(partida?.id!!)
-        referenciaPartida.child("oponente").setValue(jugador)
+        val database = obtenerReferenciaALaBaseDeDatos()
+        val referenciaPartidas = null // TODO-06-DATABASE cambiar el valor null por el child de la database llamado "Constantes.TABLA_PARTIDAS"
+        val referenciaPartida = null // TODO-06-DATABASE cambiar el valor null por el child de referenciaPartidas con el id de la partida como parametro
+        // TODO-06-DATABASE Descomentar la siguiente linea una vez obtenidos los dos datos anteriores
+//        referenciaPartida.child("oponente").setValue(jugador)
+    }
+
+    private fun obtenerIdDeUsuario(): String {
+        // TODO-05-AUTHENTICATION
+        // Obtener el uid del currentUser y retornarlo
+        return "devolver_id_de_usuario"
+    }
+
+    private fun obtenerReferenciaALaBaseDeDatos() {
+        // TODO-06-DATABASE
+        // Retornar una referencia a la instancia de la base de datos.
     }
 }
