@@ -2,8 +2,10 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
 apply plugin: 'kotlin-android-extensions'
-// TODO-01-INTEGRAR
-// TODO-02-CRASHLYTICS
+//OK TODO-01-INTEGRAR
+apply plugin: 'com.google.gms.google-services'
+//OK TODO-02-CRASHLYTICS
+apply plugin: 'com.google.firebase.crashlytics'
 
 android {
     compileSdkVersion 30
@@ -22,13 +24,24 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    //ISSUE Invoke-customs are only supported starting with android 0 --min-api 26
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-    // TODO-01-INTEGRAR
+    //OK TODO-01-INTEGRAR
+    implementation platform('com.google.firebase:firebase-bom:28.2.1')
     // Agregar dependencias de Firebase en esta seccion
+    implementation 'com.google.firebase:firebase-analytics-ktx'
+    //OK TODO-02-CRASHLYTICS
+    implementation 'com.google.firebase:firebase-crashlytics-ktx'
+
+    implementation 'com.google.firebase:firebase-config-ktx'
 
     implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'com.google.android.material:material:1.3.0'

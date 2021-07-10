@@ -6,13 +6,31 @@ import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import ar.com.develup.tateti.R
 import com.google.android.material.snackbar.Snackbar
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.google.firebase.ktx.Firebase
 import kotlinx.android.synthetic.main.actividad_inicial.*
+import java.lang.Exception
+import java.util.*
+import com.google.firebase.analytics.ktx.logEvent
+import com.google.firebase.remoteconfig.ktx.remoteConfig
+import com.google.firebase.remoteconfig.ktx.remoteConfigSettings
+
 
 class ActividadInicial : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.actividad_inicial)
+
+        FirebaseCrashlytics.getInstance().setUserId("12345")
+        Firebase.analytics.setUserId("12345")
+
+        val deviceLanguage = Locale.getDefault().displayLanguage
+        Firebase.analytics.logEvent("Pantalla inicial Cargada") {
+            param("deviceLanguage", deviceLanguage)
+        }
+        FirebaseCrashlytics.getInstance().setCustomKey("deviceLanguage", deviceLanguage)
 
         iniciarSesion.setOnClickListener { iniciarSesion() }
         registrate.setOnClickListener { registrate() }
@@ -24,7 +42,10 @@ class ActividadInicial : AppCompatActivity() {
             verPartidas()
             finish()
         }
+
         actualizarRemoteConfig()
+
+
     }
 
     private fun usuarioEstaLogueado(): Boolean {
@@ -39,34 +60,51 @@ class ActividadInicial : AppCompatActivity() {
     }
 
     private fun registrate() {
+        Firebase.analytics.logEvent("Boton de registrarse presionado") { }
         val intent = Intent(this, ActividadRegistracion::class.java)
         startActivity(intent)
     }
 
     private fun actualizarRemoteConfig() {
+        val settings = remoteConfigSettings {
+            minimumFetchIntervalInSeconds = 5
+            fetchTimeoutInSeconds = 10
+        }
+        Firebase.remoteConfig.setConfigSettingsAsync(settings)
+
         configurarDefaultsRemoteConfig()
         configurarOlvideMiContrasena()
     }
 
     private fun configurarDefaultsRemoteConfig() {
-        // TODO-04-REMOTECONFIG
+        //OK TODO-04-REMOTECONFIG
         // Configurar los valores por default para remote config,
         // ya sea por codigo o por XML
+        val default = mapOf(
+                "forgetPassButton" to true
+        )
+        Firebase.remoteConfig.setDefaultsAsync(default)
     }
 
     private fun configurarOlvideMiContrasena() {
-        // TODO-04-REMOTECONFIG
+        //OK TODO-04-REMOTECONFIG
         // Obtener el valor de la configuracion para saber si mostrar
         // o no el boton de olvide mi contraseña
-        val botonOlvideHabilitado = false
-        if (botonOlvideHabilitado) {
-            olvideMiContrasena.visibility = View.VISIBLE
-        } else {
-            olvideMiContrasena.visibility = View.GONE
-        }
+        Firebase.remoteConfig.fetchAndActivate()
+                .addOnCompleteListener {
+
+                    val forgetPassButton = Firebase.remoteConfig.getBoolean("forgetPassButton")
+                    val botonOlvideHabilitado = forgetPassButton
+                            if (botonOlvideHabilitado) {
+                                olvideMiContrasena.visibility = View.VISIBLE
+                            } else {
+                                olvideMiContrasena.visibility = View.GONE
+                            }
+                }
     }
 
     private fun olvideMiContrasena() {
+        Firebase.analytics.logEvent("Boton de Olvide Mi Contraseña presionado") { }
         // Obtengo el mail
         val email = email.text.toString()
 
@@ -91,13 +129,26 @@ class ActividadInicial : AppCompatActivity() {
     }
 
     private fun iniciarSesion() {
+        Firebase.analytics.logEvent("Boton de iniciar sesión presionado") { }
+        FirebaseCrashlytics.getInstance().log("get email")
         val email = email.text.toString()
+        FirebaseCrashlytics.getInstance().log("get password")
         val password = password.text.toString()
 
+        try {
+            if (email == "" || password == "") {
+                throw IllegalArgumentException("Login tried without mail or password")
+            } else {
+                verPartidas()
+            }
+        } catch (e: Exception) {
+            FirebaseCrashlytics.getInstance().recordException(e)
+        }
 
         // TODO-05-AUTHENTICATION
         // IMPORTANTE: Eliminar  la siguiente linea cuando se implemente authentication
-        verPartidas()
+
+
 
 
         // TODO-05-AUTHENTICATION
