@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import ar.com.develup.tateti.R
+import com.google.android.gms.tasks.OnCompleteListener
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.analytics.ktx.analytics
 import com.google.firebase.crashlytics.FirebaseCrashlytics
@@ -13,8 +14,12 @@ import kotlinx.android.synthetic.main.actividad_inicial.*
 import java.lang.Exception
 import java.util.*
 import com.google.firebase.analytics.ktx.logEvent
+import com.google.firebase.auth.AuthResult
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.remoteconfig.ktx.remoteConfig
 import com.google.firebase.remoteconfig.ktx.remoteConfigSettings
+import com.google.firebase.auth.ktx.auth
 
 
 class ActividadInicial : AppCompatActivity() {
@@ -22,9 +27,6 @@ class ActividadInicial : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.actividad_inicial)
-
-        FirebaseCrashlytics.getInstance().setUserId("12345")
-        Firebase.analytics.setUserId("12345")
 
         val deviceLanguage = Locale.getDefault().displayLanguage
         Firebase.analytics.logEvent("Pantalla inicial Cargada") {
@@ -49,8 +51,11 @@ class ActividadInicial : AppCompatActivity() {
     }
 
     private fun usuarioEstaLogueado(): Boolean {
-        // TODO-05-AUTHENTICATION
+        //OK TODO-05-AUTHENTICATION
         // Validar que currentUser sea != null
+        if (Firebase.auth.currentUser != null) {
+            return true
+        }
         return false
     }
 
@@ -112,19 +117,38 @@ class ActividadInicial : AppCompatActivity() {
         if (email.isEmpty()) {
             Snackbar.make(rootView!!, "Completa el email", Snackbar.LENGTH_SHORT).show()
         } else {
-            // TODO-05-AUTHENTICATION
+            //OK TODO-05-AUTHENTICATION
             // Si completo el mail debo enviar un mail de reset
             // Para ello, utilizamos sendPasswordResetEmail con el email como parametro
             // Agregar el siguiente fragmento de codigo como CompleteListener, que notifica al usuario
             // el resultado de la operacion
+            Firebase.auth.sendPasswordResetEmail(email)
+              .addOnCompleteListener { task ->
+                  if (task.isSuccessful) {
+                      Snackbar.make(rootView, "Email enviado", Snackbar.LENGTH_SHORT).show()
+                  } else {
+                      Snackbar.make(rootView, "Error " + task.exception, Snackbar.LENGTH_SHORT).show()
+                  }
+              }
+        }
+    }
 
-            //  .addOnCompleteListener { task ->
-            //      if (task.isSuccessful) {
-            //          Snackbar.make(rootView, "Email enviado", Snackbar.LENGTH_SHORT).show()
-            //      } else {
-            //          Snackbar.make(rootView, "Error " + task.exception, Snackbar.LENGTH_SHORT).show()
-            //      }
-            //  }
+    private val authenticationListener: OnCompleteListener<AuthResult?> = OnCompleteListener<AuthResult?> { task ->
+        if (task.isSuccessful) {
+            FirebaseCrashlytics.getInstance().setUserId(Firebase.auth.currentUser!!.uid)
+            Firebase.analytics.setUserId(Firebase.auth.currentUser!!.uid)
+            if (usuarioVerificoEmail()) {
+                verPartidas()
+            } else {
+                desloguearse()
+                Snackbar.make(rootView!!, "Verifica tu email para continuar", Snackbar.LENGTH_SHORT).show()
+            }
+        } else {
+            if (task.exception is FirebaseAuthInvalidUserException) {
+                Snackbar.make(rootView!!, "El usuario no existe", Snackbar.LENGTH_SHORT).show()
+            } else if (task.exception is FirebaseAuthInvalidCredentialsException) {
+                Snackbar.make(rootView!!, "Credenciales inválidas", Snackbar.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -139,48 +163,31 @@ class ActividadInicial : AppCompatActivity() {
             if (email == "" || password == "") {
                 throw IllegalArgumentException("Login tried without mail or password")
             } else {
-                verPartidas()
+                //OK TODO-05-AUTHENTICATION
+                // IMPORTANTE: Eliminar  la siguiente linea cuando se implemente authentication
+                //verPartidas()
+                //OK TODO-05-AUTHENTICATION
+                // hacer signInWithEmailAndPassword con los valores ingresados de email y password
+                // Agregar en addOnCompleteListener el campo authenticationListener definido mas abajo
+                Firebase.auth.signInWithEmailAndPassword(email, password)
+                        .addOnCompleteListener(this, authenticationListener)
             }
         } catch (e: Exception) {
             FirebaseCrashlytics.getInstance().recordException(e)
         }
-
-        // TODO-05-AUTHENTICATION
-        // IMPORTANTE: Eliminar  la siguiente linea cuando se implemente authentication
-
-
-
-
-        // TODO-05-AUTHENTICATION
-        // hacer signInWithEmailAndPassword con los valores ingresados de email y password
-        // Agregar en addOnCompleteListener el campo authenticationListener definido mas abajo
     }
 
-    //    private val authenticationListener: OnCompleteListener<AuthResult?> = OnCompleteListener<AuthResult?> { task ->
-    //        if (task.isSuccessful) {
-    //            if (usuarioVerificoEmail()) {
-    //                verPartidas()
-    //            } else {
-    //                desloguearse()
-    //                Snackbar.make(rootView!!, "Verifica tu email para continuar", Snackbar.LENGTH_SHORT).show()
-    //            }
-    //        } else {
-    //            if (task.exception is FirebaseAuthInvalidUserException) {
-    //                Snackbar.make(rootView!!, "El usuario no existe", Snackbar.LENGTH_SHORT).show()
-    //            } else if (task.exception is FirebaseAuthInvalidCredentialsException) {
-    //                Snackbar.make(rootView!!, "Credenciales inválidas", Snackbar.LENGTH_SHORT).show()
-    //            }
-    //        }
-    //    }
+
 
     private fun usuarioVerificoEmail(): Boolean {
-        // TODO-05-AUTHENTICATION
+        //OK TODO-05-AUTHENTICATION
         // Preguntar al currentUser si verifico email
-        return false
+        return Firebase.auth.currentUser!!.isEmailVerified
     }
 
     private fun desloguearse() {
-        // TODO-05-AUTHENTICATION
+        //OK TODO-05-AUTHENTICATION
         // Hacer signOut de Firebase
+        Firebase.auth.signOut()
     }
 }

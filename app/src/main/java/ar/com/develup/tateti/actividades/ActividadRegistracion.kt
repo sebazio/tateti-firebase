@@ -3,7 +3,12 @@ package ar.com.develup.tateti.actividades
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import ar.com.develup.tateti.R
+import com.google.android.gms.tasks.OnCompleteListener
 import com.google.android.material.snackbar.Snackbar
+import com.google.firebase.auth.AuthResult
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
 import kotlinx.android.synthetic.main.actividad_registracion.*
 
 class ActividadRegistracion : AppCompatActivity() {
@@ -31,28 +36,33 @@ class ActividadRegistracion : AppCompatActivity() {
         }
     }
 
-    private fun registrarUsuarioEnFirebase(email: String, passwordIngresada: String) {
-        // TODO-05-AUTHENTICATION
-        // Crear el usuario con el email y passwordIngresada
-        // Ademas, registrar en CompleteListener el listener registracionCompletaListener definido mas abajo
+    private val registracionCompletaListener: OnCompleteListener<AuthResult?> = OnCompleteListener { task ->
+        if (task.isSuccessful) {
+            // Si se registro OK, muestro mensaje y envio mail de verificacion
+            Snackbar.make(rootView, "Registro exitoso", Snackbar.LENGTH_SHORT).show()
+            enviarEmailDeVerificacion()
+        } else if (task.exception is FirebaseAuthUserCollisionException) {
+            // Si el usuario ya existe, mostramos error
+            Snackbar.make(rootView, "El usuario ya existe", Snackbar.LENGTH_SHORT).show()
+        } else {
+            // Por cualquier otro error, mostramos un mensaje de error
+            Snackbar.make(rootView, "El registro fallo: " + task.exception, Snackbar.LENGTH_LONG).show()
+        }
     }
 
-//    private val registracionCompletaListener: OnCompleteListener<AuthResult?> = OnCompleteListener { task ->
-//        if (task.isSuccessful) {
-//            // Si se registro OK, muestro mensaje y envio mail de verificacion
-//            Snackbar.make(rootView, "Registro exitoso", Snackbar.LENGTH_SHORT).show()
-//            enviarEmailDeVerificacion()
-//        } else if (task.exception is FirebaseAuthUserCollisionException) {
-//            // Si el usuario ya existe, mostramos error
-//            Snackbar.make(rootView, "El usuario ya existe", Snackbar.LENGTH_SHORT).show()
-//        } else {
-//            // Por cualquier otro error, mostramos un mensaje de error
-//            Snackbar.make(rootView, "El registro fallo: " + task.exception, Snackbar.LENGTH_LONG).show()
-//        }
-//    }
+    private fun registrarUsuarioEnFirebase(email: String, passwordIngresada: String) {
+        //OK TODO-05-AUTHENTICATION
+        // Crear el usuario con el email y passwordIngresada
+        // Ademas, registrar en CompleteListener el listener registracionCompletaListener definido mas abajo
+        Firebase.auth.createUserWithEmailAndPassword(email, passwordIngresada)
+                .addOnCompleteListener(this, registracionCompletaListener)
+    }
+
+
 
     private fun enviarEmailDeVerificacion() {
-        // TODO-05-AUTHENTICATION
+        //OK TODO-05-AUTHENTICATION
         // Enviar mail de verificacion al usuario currentUser
+        Firebase.auth.currentUser!!.sendEmailVerification()
     }
 }
