@@ -1,7 +1,18 @@
 package ar.com.develup.tateti.servicios
 
-// TODO-07-NOTIFICATION
-/*
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.media.RingtoneManager
+import androidx.core.app.NotificationCompat
+import ar.com.develup.tateti.R
+import ar.com.develup.tateti.actividades.ActividadInicial
+import com.google.firebase.messaging.FirebaseMessagingService
+import com.google.firebase.messaging.RemoteMessage
+
+//OK TODO-07-NOTIFICATION
+
 class ServicioNotificaciones : FirebaseMessagingService() {
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
@@ -29,4 +40,3 @@ class ServicioNotificaciones : FirebaseMessagingService() {
     }
 }
 
- */

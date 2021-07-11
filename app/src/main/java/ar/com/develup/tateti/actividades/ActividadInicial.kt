@@ -2,6 +2,7 @@ package ar.com.develup.tateti.actividades
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import ar.com.develup.tateti.R
@@ -20,6 +21,7 @@ import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.remoteconfig.ktx.remoteConfig
 import com.google.firebase.remoteconfig.ktx.remoteConfigSettings
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.messaging.ktx.messaging
 
 
 class ActividadInicial : AppCompatActivity() {
@@ -27,6 +29,16 @@ class ActividadInicial : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.actividad_inicial)
+
+        //CONOCER TOKEN PARA FCM
+        /*
+        Firebase.messaging.token.addOnCompleteListener {
+            if(it.isSuccessful) {
+                Log.d("Tateti", it.result!!)
+            }
+        }
+        */
+
 
         val deviceLanguage = Locale.getDefault().displayLanguage
         Firebase.analytics.logEvent("Pantalla inicial Cargada") {
