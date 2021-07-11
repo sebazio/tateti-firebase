@@ -41,7 +41,7 @@ class ActividadInicial : AppCompatActivity() {
 
 
         val deviceLanguage = Locale.getDefault().displayLanguage
-        Firebase.analytics.logEvent("Pantalla_inicial_Cargada") {
+        Firebase.analytics.logEvent("Pantalla inicial Cargada") {
             param("deviceLanguage", deviceLanguage)
         }
         FirebaseCrashlytics.getInstance().setCustomKey("deviceLanguage", deviceLanguage)
@@ -77,7 +77,7 @@ class ActividadInicial : AppCompatActivity() {
     }
 
     private fun registrate() {
-        Firebase.analytics.logEvent("Boton_de_registrarse_presionado") { }
+        Firebase.analytics.logEvent("Boton de registrarse presionado") { }
         val intent = Intent(this, ActividadRegistracion::class.java)
         startActivity(intent)
     }
@@ -121,7 +121,7 @@ class ActividadInicial : AppCompatActivity() {
     }
 
     private fun olvideMiContrasena() {
-        Firebase.analytics.logEvent("Boton_de_Olvide_Mi_Contraseña presionado") { }
+        Firebase.analytics.logEvent("Boton de Olvide Mi Contraseña presionado") { }
         // Obtengo el mail
         val email = email.text.toString()
 
@@ -165,7 +165,7 @@ class ActividadInicial : AppCompatActivity() {
     }
 
     private fun iniciarSesion() {
-        Firebase.analytics.logEvent("Boton_de_iniciar_sesión_presionado") { }
+        Firebase.analytics.logEvent("Boton de iniciar sesión presionado") { }
         FirebaseCrashlytics.getInstance().log("get email")
         val email = email.text.toString()
         FirebaseCrashlytics.getInstance().log("get password")
